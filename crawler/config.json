@@ -27,8 +27,8 @@
         "https://business.sohu.com"
       ],
       "allow_domains": ["sohu.com"],
-      "blank_list_patterns": ["stock\\.sohu\\.com", "//m\\.sohu\\.com"],
-      "news_path_patterns": ["/a/"],
+      "blank_list_patterns": [],
+      "news_path_patterns": ["www\\.sohu\\.com/a/"],
       "interval": {"min": 1, "max": 3}
     },
     {
@@ -47,8 +47,8 @@
         "https://finance.ifeng.com/"
       ],
       "allow_domains": ["ifeng.com"],
-      "blank_list_patterns": ["//v\\.ifeng\\.com/c/"],
-      "news_path_patterns": ["/c/[a-zA-Z0-9]+$"],
+      "blank_list_patterns": [],
+      "news_path_patterns": ["finance\\.ifeng\\.com/c/[a-zA-Z0-9]+$"],
       "interval": {"min": 1, "max": 3}
     }
   ]
