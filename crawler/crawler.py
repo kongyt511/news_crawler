@@ -1,5 +1,7 @@
 import json, random, time
 import re
+import sys
+import threading
 from urllib.parse import urlparse, urlunparse, urljoin
 import requests
 from bs4 import BeautifulSoup
@@ -107,8 +109,36 @@ def crawl_source(name=None):
                 interval_min=source["interval"]["min"],
                 interval_max=source["interval"]["max"]
             )
+    print("Crawling finished.")
+
+def crawl_source_all():
+    threads = []
+
+    for source in config["sources"]:
+        t = threading.Thread(
+            target=crawl_bfs,
+            args=(
+                source["name"],
+                source["root_urls"],
+                source["allow_domains"],
+                source["news_path_patterns"],
+                source["interval"]["min"],
+                source["interval"]["max"],
+            ),
+            daemon=True  # 主线程退出时自动结束
+        )
+        t.start()
+        threads.append(t)
+        print(f"[Thread] Started crawling source: {source['name']}")
+
+    # 等待所有线程结束
+    for t in threads:
+        t.join()
+
+    print("All crawling finished.")
 
 if __name__ == "__main__":
-    crawl_source('ifeng')  # 可以替换为 None 抓取所有源
-    storage.save()
-    print("Crawling finished.")
+    if len(sys.argv) < 2:
+        crawl_source_all()
+    else:
+        crawl_source(sys.argv[1])
