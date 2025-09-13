@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 import pymongo
 
@@ -39,7 +40,33 @@ class Storage:
         else:
             return True
 
+    def parse_datetime(self, dt):
+        if dt is None:
+            return None
+        if isinstance(dt, datetime):
+            return dt  # 已经是 datetime 类型，直接返回
+        if not isinstance(dt, str):
+            return None  # 不是字符串也不是 datetime，返回 None
+
+        # 尝试匹配常见日期格式
+        patterns = [
+            ("%Y年%m月%d日 %H:%M:%S", r"\d{4}年\d{2}月\d{2}日 \d{2}:\d{2}:\d{2}"),
+            ("%Y-%m-%d %H:%M:%S", r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"),
+            ("%Y-%m-%dT%H:%M:%S.%f%z", r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+[\+\-]\d{2}:\d{2}"),
+            ("%Y-%m-%dT%H:%M:%S", r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"),
+            ("%Y-%m-%d", r"\d{4}-\d{2}-\d{2}")
+        ]
+
+        for fmt, pattern in patterns:
+            if re.fullmatch(pattern, dt):
+                try:
+                    return datetime.strptime(dt, fmt)
+                except Exception:
+                    continue
+        return None  # 无法解析，返回 None
+
     def add_news(self, source, title, url, content, publish_time=None, preview_len=100):
+        publish_time = self.parse_datetime(publish_time)
         if self.check_valid(url, title, content, publish_time) == False:
             return
         news_item = {
