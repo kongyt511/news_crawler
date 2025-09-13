@@ -124,12 +124,31 @@ def parse_ifeng(html: str):
 
     return title, publish_date, text
 
+def parse_news163(html: str):
+    soup = BeautifulSoup(html, "html.parser")
+
+    # ----------------- 标题 -----------------
+    title = None
+
+    # ----------------- 时间 -----------------
+    publish_date = None
+
+    # ----------------- 正文 -----------------
+    text = None
+    content_div = soup.find("div", class_="post_body")
+    if content_div:
+        paragraphs = content_div.find_all("p")
+        text = "\n".join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
+
+    return title, publish_date, text
+
 # ------------------ 解析器注册表 ------------------
 CUSTOM_EXTRACTORS = {
     "sina": parse_sina,
     "eastmoney": parse_eastmoney,
     "sohu": parse_sohu,
     "ifeng": parse_ifeng,
+    "news163": parse_news163,
 }
 
 
