@@ -23,24 +23,24 @@ class Storage:
             return True
         return False
 
-    def save_failed(self, url, title, content):
+    def save_failed(self, url, title, content, publish_time):
         try:
             filepath = "failed_urls.txt"
             with open(filepath, "a", encoding="utf-8") as f:
-                f.write(f"url: {url}, title_valid: {bool(title)}, content_valid: {bool(content)}\n")
+                f.write(f"url: {url}, title_valid: {bool(title)}, content_valid: {bool(content)}, publish_time_valid: {bool(publish_time)}\n")
             print(f"[Saved] 失败 URL 已保存到 {filepath}")
         except Exception as e:
             print(f"[Error] 保存失败 URL 失败: {e}")
 
-    def check_valid(self, url, title, content):
-        if title == "" or content == "":
-            self.save_failed(url, title, content)
+    def check_valid(self, url, title, content, publish_time):
+        if title == "" or content == "" or publish_time is None:
+            self.save_failed(url, title, content, publish_time)
             return False
         else:
             return True
 
     def add_news(self, source, title, url, content, publish_time=None, preview_len=100):
-        if self.check_valid(url, title, content) == False:
+        if self.check_valid(url, title, content, publish_time) == False:
             return
         news_item = {
             "source": source,
