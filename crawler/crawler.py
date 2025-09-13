@@ -122,6 +122,7 @@ def crawl_source_all():
                 source["name"],
                 source["root_urls"],
                 source["allow_domains"],
+                source["blank_list_patterns"],
                 source["news_path_patterns"],
                 source["interval"]["min"],
                 source["interval"]["max"],
