@@ -82,6 +82,10 @@ def parse_sohu(html: str):
     time_tag = soup.find("span", id="news-time")
     if not time_tag:
         time_tag = soup.find("span", class_="content-main-desc--time")
+    if not time_tag:
+        container = soup.find("div", class_="article-content-wrapper")
+        if container:
+            time_tag = container.find("span", class_="time")
 
     if time_tag:
         try:
