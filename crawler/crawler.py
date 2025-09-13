@@ -59,7 +59,7 @@ def crawl_bfs(source, seed_urls, allow_domains, blank_list_patterns, news_path_p
         if storage.is_visited(url):
             continue
 
-        print(f"Crawling: {url}")
+        print(f"Crawling: {url}, Queue size: {len(queue)}")
         storage.add_visited(url)
 
         try:
