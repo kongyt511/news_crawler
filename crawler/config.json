@@ -47,7 +47,7 @@
         "https://finance.ifeng.com/"
       ],
       "allow_domains": ["ifeng.com"],
-      "blank_list_patterns": [],
+      "blank_list_patterns": ["//v\\.ifeng\\.com/c/"],
       "news_path_patterns": ["/c/[a-zA-Z0-9]+$"],
       "interval": {"min": 1, "max": 3}
     }

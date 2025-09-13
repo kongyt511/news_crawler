@@ -1,3 +1,5 @@
+import sys
+
 from newspaper import Article
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -119,7 +121,11 @@ def parse_ifeng(html: str):
 
     # ----------------- 正文 -----------------
     text = None
-    article_tag = soup.find("div", class_=re.compile(r"index_text"))
+
+    article_tag = None
+    container = soup.find("div", class_=re.compile(r"index_articleBox"))
+    if container:
+        article_tag = container.find("div", class_=re.compile(r"index_text"))
     if article_tag:
         paragraphs = [p.get_text(strip=True) for p in article_tag.find_all("p") if p.get_text(strip=True)]
         text = "\n".join(paragraphs)
@@ -194,3 +200,8 @@ def extract_news(url, source):
     article.download()
     article.parse()
     return article.title, article.text, article.publish_date
+
+
+if __name__ == '__main__':
+    title, content, publish_date = extract_news(sys.argv[1], sys.argv[2])
+    print(f"title: {title}, publish_date: {publish_date},content: {bool(content)}")
