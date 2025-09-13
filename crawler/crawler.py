@@ -21,8 +21,7 @@ def is_allowed(url, allow_domains, blank_list_patterns):
     return any(d in domain for d in allow_domains) and not any(re.search(p, url) for p in blank_list_patterns)
 
 def is_news(url, news_path_patterns):
-    path = urlparse(url).path
-    return any(re.search(pattern, path) for pattern in news_path_patterns)
+    return any(re.search(pattern, url) for pattern in news_path_patterns)
 
 def normalize_url(url):
     """去掉 URL 的 query 和 fragment 部分"""
@@ -87,7 +86,13 @@ def crawl_bfs(source, seed_urls, allow_domains, blank_list_patterns, news_path_p
             enqueue_count = 0
             for link in links:
                 clean_link = normalize_url(link)
-                if clean_link not in in_queue and not storage.is_visited(clean_link):
+                if clean_link not in in_queue and not storage.is_visited(clean_link) and is_news(clean_link, news_path_patterns):
+                    queue.append(clean_link)
+                    in_queue.add(clean_link)
+                    enqueue_count = enqueue_count + 1
+            for link in links:
+                clean_link = normalize_url(link)
+                if clean_link not in in_queue and not storage.is_visited(clean_link) and not is_news(clean_link, news_path_patterns):
                     queue.append(clean_link)
                     in_queue.add(clean_link)
                     enqueue_count = enqueue_count + 1
