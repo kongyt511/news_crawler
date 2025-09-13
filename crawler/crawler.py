@@ -16,9 +16,9 @@ with open("config.json", "r", encoding="utf-8") as f:
 storage = Storage()
 
 # ------------------ 辅助函数 ------------------
-def is_allowed(url, allow_domains):
+def is_allowed(url, allow_domains, blank_list_patterns):
     domain = urlparse(url).netloc
-    return any(d in domain for d in allow_domains)
+    return any(d in domain for d in allow_domains) and not any(re.search(p, url) for p in blank_list_patterns)
 
 def is_news(url, news_path_patterns):
     path = urlparse(url).path
@@ -30,19 +30,19 @@ def normalize_url(url):
     clean_parts = parts._replace(query="", fragment="")
     return urlunparse(clean_parts)
 
-def get_links(html, base_url, allow_domains):
+def get_links(html, base_url, allow_domains, blank_list_patterns):
     soup = BeautifulSoup(html, "html.parser")
     links = set()
     for a in soup.find_all("a", href=True):
         new_url = urljoin(base_url, a['href'])
-        if new_url.startswith("http") and is_allowed(new_url, allow_domains):
+        if new_url.startswith("http") and is_allowed(new_url, allow_domains, blank_list_patterns):
             links.add(new_url)
     return links
 
 # ------------------ BFS 爬虫 ------------------
 MAX_LINKS_PER_PAGE = 65536  # 每页抓取最大链接数
 
-def crawl_bfs(source, seed_urls, allow_domains, news_path_patterns, interval_min, interval_max):
+def crawl_bfs(source, seed_urls, allow_domains, blank_list_patterns, news_path_patterns, interval_min, interval_max):
     queue = deque()
     in_queue = set()  # 用来记录队列里已经存在的 URL
 
@@ -83,7 +83,7 @@ def crawl_bfs(source, seed_urls, allow_domains, news_path_patterns, interval_min
                     print(f"  -> Failed to parse news: {e}")
 
             # ------------------ 抽取子链接入队 ------------------
-            links = list(get_links(html, url, allow_domains))[:MAX_LINKS_PER_PAGE]
+            links = list(get_links(html, url, allow_domains, blank_list_patterns))[:MAX_LINKS_PER_PAGE]
             enqueue_count = 0
             for link in links:
                 clean_link = normalize_url(link)
@@ -105,6 +105,7 @@ def crawl_source(name=None):
                 source=source["name"],
                 seed_urls=source["root_urls"],
                 allow_domains=source["allow_domains"],
+                blank_list_patterns=source["blank_list_patterns"],
                 news_path_patterns=source["news_path_patterns"],
                 interval_min=source["interval"]["min"],
                 interval_max=source["interval"]["max"]

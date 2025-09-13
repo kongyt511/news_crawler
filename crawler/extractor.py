@@ -17,10 +17,10 @@ def parse_sina(html: str):
     publish_date = None
 
     # ----------------- 正文 -----------------
-    content_div = soup.find("div", id="artibody")
-    text = ""
-    if content_div:
-        paragraphs = [p.get_text(strip=True) for p in content_div.find_all("p") if p.get_text(strip=True)]
+    text = None
+    article_tag = soup.find("div", id="artibody")
+    if article_tag:
+        paragraphs = [p.get_text(strip=True) for p in article_tag.find_all("p") if p.get_text(strip=True)]
         text = "\n".join(paragraphs)
 
     return title, publish_date, text
@@ -61,10 +61,10 @@ def parse_eastmoney(html: str):
                 pass
 
     # ----------------- 正文 -----------------
-    content_div = soup.find("div", id="ContentBody")
-    text = ""
-    if content_div:
-        paragraphs = [p.get_text(strip=True) for p in content_div.find_all("p") if p.get_text(strip=True)]
+    text = None
+    article_tag = soup.find("div", id="ContentBody")
+    if article_tag:
+        paragraphs = [p.get_text(strip=True) for p in article_tag.find_all("p") if p.get_text(strip=True)]
         text = "\n".join(paragraphs)
 
     return title, publish_date, text
@@ -78,24 +78,24 @@ def parse_sohu(html: str):
     title = None
 
     # ----------------- 时间 -----------------
-    time_span = soup.find("span", id="news-time")
     publish_date = None
-    if time_span:
+    time_tag = soup.find("span", id="news-time")
+    if not time_tag:
+        time_tag = soup.find("span", class_="content-main-desc--time")
+
+    if time_tag:
         try:
-            publish_date = datetime.strptime(time_span.get_text(strip=True), "%Y-%m-%d %H:%M")
+            publish_date = datetime.strptime(time_tag.get_text(strip=True), "%Y-%m-%d %H:%M")
         except Exception:
-            publish_date = time_span.get_text(strip=True)
+            publish_date = time_tag.get_text(strip=True)
 
     # ----------------- 正文 -----------------
     article_tag = soup.find("article", id="mp-editor")
-    text = ""
+    if not article_tag:
+        article_tag = soup.find("div", class_=re.compile(r"content-main-detail"))
+    text = None
     if article_tag:
-        paragraphs = []
-        for p in article_tag.find_all("p"):
-            # 排除空文本
-            p_text = p.get_text(strip=True)
-            if p_text:
-                paragraphs.append(p_text)
+        paragraphs = [p.get_text(strip=True) for p in article_tag.find_all("p") if p.get_text(strip=True)]
         text = "\n".join(paragraphs)
 
     return title, publish_date, text
@@ -108,19 +108,17 @@ def parse_ifeng(html: str):
 
     # ----------------- 时间 -----------------
     publish_date = None
-    container = soup.find("div", class_=re.compile(r"index_textTitle"))
-    if container:
-        time_tag = container.find("div", class_=re.compile(r"index_timeBref"))
-        if time_tag:
-            # 可能包含 “来自北京”，只保留日期时间部分
-            publish_date = time_tag.get_text(strip=True).split("来自")[0].strip()
+    time_tag = soup.find("div", class_=re.compile(r"index_timeBref"))
+    if time_tag:
+        # 可能包含 “来自北京”，只保留日期时间部分
+        publish_date = time_tag.get_text(strip=True).split("来自")[0].strip()
 
     # ----------------- 正文 -----------------
-    text = ""
-    content_div = soup.find("div", class_=re.compile(r"index_text"))
-    if content_div:
-        paragraphs = content_div.find_all("p")
-        text = "\n".join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
+    text = None
+    article_tag = soup.find("div", class_=re.compile(r"index_text"))
+    if article_tag:
+        paragraphs = [p.get_text(strip=True) for p in article_tag.find_all("p") if p.get_text(strip=True)]
+        text = "\n".join(paragraphs)
 
     return title, publish_date, text
 
@@ -156,6 +154,9 @@ CUSTOM_EXTRACTORS = {
 class News(Article):
     def __init__(self, url, source):
         self.source = source
+        self.publish_date = None
+        self.title = None
+        self.text = None
         super(News, self).__init__(url)
 
     def parse(self):
@@ -167,11 +168,11 @@ class News(Article):
         if extractor:
             try:
                 title, pub_date, text = extractor(self.html)
-                if title:
+                if title and bool(self.title) == False:
                     self.title = title
-                if pub_date:
+                if pub_date and bool(self.publish_date) == False:
                     self.publish_date = pub_date
-                if text:
+                if text and bool(self.text) == False:
                     self.text = text
             except Exception as e:
                 print(f"[Extractor] Failed custom parse for {self.source}: {e}")

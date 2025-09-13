@@ -27,7 +27,8 @@ class Storage:
     def save_failed(self, url, title, content, publish_time):
         try:
             filepath = "failed_urls.txt"
-            with open(filepath, "a", encoding="utf-8") as f:
+            os.makedirs("data", exist_ok=True)
+            with open(os.path.join("data", filepath), "a", encoding="utf-8") as f:
                 f.write(f"url: {url}, title_valid: {bool(title)}, content_valid: {bool(content)}, publish_time_valid: {bool(publish_time)}\n")
             print(f"[Saved] 失败 URL 已保存到 {filepath}")
         except Exception as e:
