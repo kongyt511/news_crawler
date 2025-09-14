@@ -1,5 +1,7 @@
+import json
 import os
 import re
+import pika
 from datetime import datetime
 import pymongo
 
@@ -12,6 +14,13 @@ class Storage:
         self.news = self.db["news"]
         self.news.create_index("url", unique=True)
         self.visited = set()
+        self.rabbitmq_host = os.environ.get("RABBITMQ_HOST", "")
+        self.rabbitmq_conn = pika.BlockingConnection(
+            pika.ConnectionParameters(host=self.rabbitmq_host)
+        )
+        self.rabbitmq_channel = self.rabbitmq_conn.channel()
+        self.rabbitmq_channel.queue_declare(queue="news", durable=True)
+
 
     def add_visited(self, url):
         self.visited.add(url)
@@ -66,6 +75,17 @@ class Storage:
                     continue
         return None  # 无法解析，返回 None
 
+    def notify_news(self, item):
+        self.rabbitmq_channel.basic_publish(
+            exchange="",
+            routing_key="news",
+            body=json.dumps(item),
+            properties=pika.BasicProperties(
+                delivery_mode=2,
+            )
+        )
+        print(f'[RabbitMQ] 推送新闻: {item["source"]}, {item["title"]}, {item["url"]}]')
+
     def add_news(self, source, title, url, content, publish_time=None, preview_len=100):
         publish_time = self.parse_datetime(publish_time)
         if self.check_valid(url, title, content, publish_time) == False:
@@ -85,5 +105,8 @@ class Storage:
             if len(content) > preview_len:
                 preview += "..."
             print(f"[News Added] Title: {title} | URL: {url} | Publish Time: {publish_time} | Preview: {preview}")
+            if news_item.get("publish_time").date() == datetime.now().date():
+                self.notify_news(news_item)
+
         except Exception as e:
             print(f"[Duplicate] {url} 已存在，跳过")
