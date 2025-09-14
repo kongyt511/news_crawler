@@ -16,7 +16,10 @@ class Storage:
         self.visited = set()
         self.rabbitmq_host = os.environ.get("RABBITMQ_HOST", "")
         self.rabbitmq_conn = pika.BlockingConnection(
-            pika.ConnectionParameters(host=self.rabbitmq_host)
+            pika.ConnectionParameters(
+                host=self.rabbitmq_host,
+                credentials=pika.PlainCredentials("admin", "pwd4kyt?")
+            )
         )
         self.rabbitmq_channel = self.rabbitmq_conn.channel()
         self.rabbitmq_channel.queue_declare(queue="news", durable=True)
