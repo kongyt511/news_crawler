@@ -104,6 +104,7 @@ class Storage:
             "publish_time": publish_time,
             "created_at": datetime.utcnow()
         }
+
         try:
             self.news.insert_one(news_item)
             # 日志输出
@@ -114,6 +115,14 @@ class Storage:
         except Exception as e:
             print(f"[Duplicate] {url} 已存在，跳过")
         if news_item.get("publish_time").date() == datetime.now().date():
-            self.notify_news(news_item)
+            news_item_msg = {
+                "source": source,
+                "title": title,
+                "url": url,
+                "content": content,
+                "publish_time": news_item["created_at"].isoformat(),
+                "created_at": news_item["created_at"].isoformat()
+            }
+            self.notify_news(news_item_msg)
 
 
