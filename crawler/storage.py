@@ -87,7 +87,7 @@ class Storage:
                 delivery_mode=2,
             )
         )
-        print(f'[RabbitMQ] 推送新闻: {item["source"]}, {item["title"]}, {item["url"]}]')
+        print(f'[RabbitMQ] 推送新闻: {item["source"]}, {item["title"]}, {item["url"]}')
 
     def add_news(self, source, title, url, content, publish_time=None, preview_len=100):
         publish_time = self.parse_datetime(publish_time)
@@ -108,8 +108,9 @@ class Storage:
             if len(content) > preview_len:
                 preview += "..."
             print(f"[News Added] Title: {title} | URL: {url} | Publish Time: {publish_time} | Preview: {preview}")
-            if news_item.get("publish_time").date() == datetime.now().date():
-                self.notify_news(news_item)
-
         except Exception as e:
             print(f"[Duplicate] {url} 已存在，跳过")
+        if news_item.get("publish_time").date() == datetime.now().date():
+            self.notify_news(news_item)
+
+
