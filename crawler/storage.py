@@ -79,13 +79,10 @@ class Storage:
         return None  # 无法解析，返回 None
 
     def notify_news(self, item):
-        send_item = item.copy()
-        send_item["publish_time"] = item["publish_time"].isoformat()
-        send_item["created_at"] = item["created_at"].isoformat()
         self.rabbitmq_channel.basic_publish(
             exchange="",
             routing_key="news",
-            body=json.dumps(send_item),
+            body=json.dumps(item),
             properties=pika.BasicProperties(
                 delivery_mode=2,
             )
@@ -120,7 +117,7 @@ class Storage:
                 "title": title,
                 "url": url,
                 "content": content,
-                "publish_time": news_item["created_at"].isoformat(),
+                "publish_time": news_item["publish_time"].isoformat(),
                 "created_at": news_item["created_at"].isoformat()
             }
             self.notify_news(news_item_msg)
